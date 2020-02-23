@@ -1,47 +1,71 @@
 
-
 #include <iostream>
+#include <chrono>
+#include <numeric>
+#include <vector>
+#include <algorithm>
+#include <cmath>
 
-const int prefetch_buffer = 4; // using getconf I determined a page size of 4 kb for my machine.
-const int cache_line = 64; // and a cache line size of 64 bytes.
+using namespace std;
+using namespace chrono;
+
 
 struct node {
-
-  node *next;
-  char empty_space[prefetch_buffer];
-
+	int buffer;
+	node* next = nullptr;
 };
 
 
-std::vector<node> initialize_list(int buffer_size) {
+double benchmark(int N, int iters) {
 
-  const auto num_nodes = buffer_size / cache_line;
-  std::vector<node> linked_list(num_nodes);
+	vector<node> linked_list(N);
+  vector<node*> list_order(N); //stores pointers to nodes in linked_list
 
-  for (int i = 0; i < linked_list.size() - 1; i++){
-    linked_list[i].next = &linked_list[i + 1];
-  }
+	for (int i = 0; i < N; i++) {  //
+		list_order[i] = &linked_list[i];
+	}
 
-  linked_list[list.size() - 1].next = &linked_list[0];
-  return *linked_list
+	random_shuffle(begin(list_order), end(list_order)); //shuffles the order in which nodes are linked, hindering the prefetcher.
 
+	for (int i = 0; i < N-1; i++) {  //links nodes based on the order found in list_order
+		list_order[i]->next = list_order[i+1];
+	}
+	node* head = list_order[0]; //close the loop such that the linked_list points in a circle.
+
+	auto start = chrono::steady_clock::now();
+	for (int i = 0; i < iters; i++) {
+
+		node* current = head;
+		while (current) {
+			current = current->next;
+		}
+	}
+
+  auto end = chrono::steady_clock::now();
+	auto elapsed =  end - start;
+	auto ns = duration_cast<nanoseconds>(elapsed).count();
+
+	return ns / double(N * iters); //calculates average ns per operation
 }
 
 
-static void traverse_list(node *current, int reps) {
+int main(){
+  cout << "# Bytes    Time(ns)" << endl;
 
-  for (int i = 0; i < reps; i++){
-    current = *current.next;
+	int start = 10; //iterates from 2^min to 2^max.
+	int stop = 26;
+
+	for (int i = start; i <= stop; i++) {
+
+		int N = int(pow(2, double(i)));
+		int reps = int(2e10 / pow(N, 1.5)); //scales the repetitions inversely to the size of the list.
+
+		if (reps<1){ //makes sure to round up
+      reps = 1;
+    }
+
+		auto result = benchmark(N, reps);
+		cout << (N*sizeof(node)) << "   " << result << "   # (N=" << N << ", reps=" << reps << ") " << endl;
+
   }
-}
-
-
-static void main{
-
-  // create list of buffer size intervals
-  // create
-
-
-
-
 }

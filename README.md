@@ -3,7 +3,7 @@
 
 In order to understand the latency of memory access from the different cache levels, a program was designed to intentionally create cache misses. This was achieved by the implementation of a linked list, which was randomized in its link order relative to the order of the containing vector. This would, in theory, appropriately confused the cache prefetcher and allow one to understand the access times without optimizations. Linked lists were created in lengths from 2^10 to 2^26, and the latency of looping over the linked list for a significant number of iterations was averaged to create a read time per-byte.
 
-Below, we can see the latency response to increasing buffer sizes.
+Below, we can see the latency response to increasing buffer sizes:
 
 ![alt text][graph]
 
